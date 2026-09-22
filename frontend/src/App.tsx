@@ -12,10 +12,12 @@ import CourseDetail from './pages/courses/CourseDetail'
 import Problems from './pages/problems/Problems'
 import ProblemDetail from './pages/problems/ProblemDetail'
 import Submissions from './pages/submissions/Submissions'
+import SubmissionDetail from './pages/submissions/SubmissionDetail'
 import Leaderboard from './pages/leaderboard/Leaderboard'
 import Achievements from './pages/achievements/Achievements'
 import AdminCourses from './pages/admin/AdminCourses'
 import AdminProblems from './pages/admin/AdminProblems'
+import AdminSubmissions from './pages/admin/AdminSubmissions'
 import AdminUsers from './pages/admin/AdminUsers'
 import AdminAudits from './pages/admin/AdminAudits'
 
@@ -43,6 +45,7 @@ export default function App() {
           <Route path="/problems" element={<Problems />} />
           <Route path="/problems/:id" element={<ProblemDetail />} />
           <Route path="/submissions" element={<Submissions />} />
+          <Route path="/submissions/:id" element={<SubmissionDetail />} />
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/achievements" element={<Achievements />} />
         </Route>
@@ -55,6 +58,7 @@ export default function App() {
         >
           <Route path="/admin/courses" element={<AdminCourses />} />
           <Route path="/admin/problems" element={<AdminProblems />} />
+          <Route path="/admin/submissions" element={<AdminSubmissions />} />
           <Route path="/admin/users" element={<AdminUsers />} />
           <Route path="/admin/audits" element={<AdminAudits />} />
         </Route>

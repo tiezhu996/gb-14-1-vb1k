@@ -14,6 +14,7 @@ const navItems = [
 const adminItems = [
   { to: '/admin/courses', label: '课程管理', icon: '⚙️' },
   { to: '/admin/problems', label: '题目管理', icon: '🛠️' },
+  { to: '/admin/submissions', label: '提交重判', icon: '🔁' },
   { to: '/admin/users', label: '用户管理', icon: '👥' },
   { to: '/admin/audits', label: '审计日志', icon: '🔍' },
 ]

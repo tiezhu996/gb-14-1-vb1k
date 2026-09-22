@@ -19,13 +19,13 @@ import (
 
 // SubmissionService 提交评测业务：提交 -> 评测 -> 统计与成就联动。
 type SubmissionService struct {
-	subRepo      *repository.SubmissionRepository
-	problemRepo  *repository.ProblemRepository
-	userRepo     *repository.UserRepository
-	statRepo     *repository.UserStatRepository
-	judge        *JudgeService
-	achievement  *AchievementService
-	logger       *slog.Logger
+	subRepo     *repository.SubmissionRepository
+	problemRepo *repository.ProblemRepository
+	userRepo    *repository.UserRepository
+	statRepo    *repository.UserStatRepository
+	judge       *JudgeService
+	achievement *AchievementService
+	logger      *slog.Logger
 }
 
 // NewSubmissionService 构造提交评测服务。
@@ -140,7 +140,8 @@ func (s *SubmissionService) List(ctx context.Context, userID primitive.ObjectID,
 		filter["problem_id"] = pid
 	}
 	if status != "" {
-		filter["status"] = status
+		// 列表按“最新状态”过滤：有重判取 latest_status，否则取首次评测 status。
+		filter["$expr"] = bson.M{"$eq": bson.A{bson.M{"$ifNull": bson.A{"$latest_status", "$status"}}, status}}
 	}
 	// 学生只能看自己的提交；管理员可查看全部（按 problem_id/status 过滤）。
 	if role != constants.RoleAdmin {

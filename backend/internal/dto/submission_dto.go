@@ -36,6 +36,10 @@ type SubmissionResponse struct {
 	Results       []JudgeResultResponse `json:"results"`
 	ErrorMessage  string                `json:"error_message"`
 	CreatedAt     string                `json:"created_at"`
+	// 重判信息：重判次数、最新状态（无重判时等于首次状态）、是否已补发奖励。
+	RejudgeCount   int    `json:"rejudge_count"`
+	LatestStatus   string `json:"latest_status"`
+	RewardsGranted bool   `json:"rewards_granted"`
 }
 
 // ToSubmissionResponse 将模型转换为响应。
@@ -52,19 +56,22 @@ func ToSubmissionResponse(s *model.Submission) SubmissionResponse {
 		})
 	}
 	return SubmissionResponse{
-		ID:            s.ID.Hex(),
-		UserID:        s.UserID.Hex(),
-		Username:      s.Username,
-		ProblemID:     s.ProblemID.Hex(),
-		ProblemTitle:  s.ProblemTitle,
-		Language:      s.Language,
-		Code:          s.Code,
-		Status:        s.Status,
-		Score:         s.Score,
-		PointsAwarded: s.PointsAwarded,
-		RuntimeMs:     s.RuntimeMs,
-		Results:       results,
-		ErrorMessage:  s.ErrorMessage,
-		CreatedAt:     s.CreatedAt.Format("2006-01-02 15:04:05"),
+		ID:             s.ID.Hex(),
+		UserID:         s.UserID.Hex(),
+		Username:       s.Username,
+		ProblemID:      s.ProblemID.Hex(),
+		ProblemTitle:   s.ProblemTitle,
+		Language:       s.Language,
+		Code:           s.Code,
+		Status:         s.Status,
+		Score:          s.Score,
+		PointsAwarded:  s.PointsAwarded,
+		RuntimeMs:      s.RuntimeMs,
+		Results:        results,
+		ErrorMessage:   s.ErrorMessage,
+		CreatedAt:      s.CreatedAt.Format("2006-01-02 15:04:05"),
+		RejudgeCount:   s.RejudgeCount,
+		LatestStatus:   s.CurrentStatus(),
+		RewardsGranted: s.RewardsGranted,
 	}
 }

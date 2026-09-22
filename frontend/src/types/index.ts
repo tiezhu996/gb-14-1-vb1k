@@ -99,6 +99,35 @@ export interface Submission {
   results: JudgeResult[]
   error_message: string
   created_at: string
+  // 重判信息
+  rejudge_count: number
+  latest_status: string
+  rewards_granted: boolean
+}
+
+export interface RejudgeDiff {
+  status_changed: boolean
+  from_status: string
+  to_status: string
+  score_delta: number
+  runtime_delta_ms: number
+  changed_cases: number[]
+}
+
+export interface RejudgeRecord {
+  id: string
+  submission_id: string
+  round: number
+  status: string
+  score: number
+  points_awarded: number
+  runtime_ms: number
+  results: JudgeResult[]
+  error_message: string
+  rewards_granted: boolean
+  diff: RejudgeDiff
+  operator_name: string
+  created_at: string
 }
 
 export interface Discussion {

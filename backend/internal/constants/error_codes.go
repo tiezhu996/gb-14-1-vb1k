@@ -54,6 +54,7 @@ const (
 	CodeJudgeTimeout       = 5003
 	CodeJudgeLanguage      = 5004
 	CodeJudgeUnavailable   = 5005
+	CodeRejudgeNotEligible = 5006
 )
 
 // 讨论模块错误码

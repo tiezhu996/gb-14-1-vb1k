@@ -36,9 +36,10 @@ docker compose down -v --remove-orphans
 2. **课程内容管理**：管理员创建课程（Markdown 图文教程），章节拆解、代码片段展示
 3. **在线 IDE**：Monaco Editor 内嵌，支持 Python / JavaScript / Java 语法高亮与自动补全；服务端沙箱评测，单用例超时 10 秒自动终止
 4. **编程题目评测**：ACM 风格，多测试用例逐条运行，判定 通过 / 部分通过 / 运行错误 / 超时，展示输入、期望输出与实际输出对比
-5. **排行榜与成就系统**：解题数量 × 难度加权积分（日榜 / 周榜 / 总榜）；成就徽章（连续签到 7 天、完成 10/100 题、首次通过困难题等）
-6. **讨论社区**：每道题专属讨论区，支持 Markdown 与代码块、点赞、按最佳答案排序
-7. **个人学习仪表盘**：累计学习时长、完成课程数、解题总数、各语言解题分布饼图、近 90 天每日学习热力图
+5. **提交重判与结果历史**：管理员可对“已完成但未通过”的提交发起重判；每次重判生成独立不可变记录，原代码与首次评测结果不改写，重判通过仅补发一次积分/解决数/通过数，始终失败或重复重判不扣减、不重复累计；列表/详情展示重判次数、最新状态、历次结果与差异
+6. **排行榜与成就系统**：解题数量 × 难度加权积分（日榜 / 周榜 / 总榜）；成就徽章（连续签到 7 天、完成 10/100 题、首次通过困难题等）
+7. **讨论社区**：每道题专属讨论区，支持 Markdown 与代码块、点赞、按最佳答案排序
+8. **个人学习仪表盘**：累计学习时长、完成课程数、解题总数、各语言解题分布饼图、近 90 天每日学习热力图
 
 ## 技术栈
 
@@ -219,6 +220,8 @@ curl -sS -X POST http://localhost:3010/api/v1/problems \
 | POST | /api/v1/problems/:id/submit | 提交评测 | 登录 | SubmissionService.Submit + JudgeService.Judge |
 | GET | /api/v1/submissions | 提交记录 | 登录/管理员 | SubmissionService.List |
 | GET | /api/v1/submissions/:id | 提交详情 | 本人/管理员 | SubmissionService.Get |
+| POST | /api/v1/submissions/:id/rejudge | 发起重判（仅未通过的终态提交） | 管理员 | RejudgeService.Rejudge + JudgeService.Judge |
+| GET | /api/v1/submissions/:id/rejudges | 重判历史与差异 | 本人/管理员 | RejudgeService.ListHistory |
 | GET | /api/v1/problems/:id/discussions | 讨论区 | 登录 | DiscussionService.ListByProblem |
 | POST | /api/v1/problems/:id/discussions | 发布讨论 | 登录 | DiscussionService.Create |
 | POST | /api/v1/discussions/:id/vote | 点赞/取消 | 登录 | DiscussionService.Vote |

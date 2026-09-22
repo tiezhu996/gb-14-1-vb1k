@@ -168,3 +168,11 @@ func SignInDailyKey(t time.Time) string {
 func PointsLabel(p int64) string {
 	return fmt.Sprintf("%d 分", p)
 }
+
+// FormatRejudgeRound 重判轮次文本（0 表示首次评测）。
+func FormatRejudgeRound(round int) string {
+	if round <= 0 {
+		return "首次评测"
+	}
+	return fmt.Sprintf("第 %d 次重判", round)
+}

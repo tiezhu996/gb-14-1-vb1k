@@ -7,7 +7,8 @@ CodeLearn 使用 MongoDB，无传统 SQL 迁移脚本。集合结构由 `interna
 - users（username/email 唯一索引）
 - courses（title 唯一索引）
 - problems（title 唯一索引）
-- submissions（user_id/problem_id/status 查询索引）
+- submissions（user_id/problem_id/status 查询索引；重判扩展字段 rejudge_count/latest_status/rewards_granted）
+- submission_rejudges（每次重判独立不可变记录，submission_id+round 唯一索引）
 - discussions（problem_id 查询索引）
 - achievements（成就定义）
 - user_achievements（user_id+code 唯一索引）

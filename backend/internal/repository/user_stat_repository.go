@@ -36,15 +36,15 @@ func (r *UserStatRepository) Upsert(ctx context.Context, userID primitive.Object
 	now := time.Now()
 	_, err := r.coll.UpdateOne(ctx, bson.M{"user_id": userID},
 		bson.M{"$setOnInsert": bson.M{
-			"user_id":            userID,
-			"total_learning_min": 0,
-			"completed_courses":  0,
-			"total_submissions":  0,
+			"user_id":              userID,
+			"total_learning_min":   0,
+			"completed_courses":    0,
+			"total_submissions":    0,
 			"accepted_submissions": 0,
-			"language_dist":      bson.M{},
-			"daily_activity":     bson.M{},
-			"created_at":         now,
-			"updated_at":         now,
+			"language_dist":        bson.M{},
+			"daily_activity":       bson.M{},
+			"created_at":           now,
+			"updated_at":           now,
 		}},
 		options.Update().SetUpsert(true))
 	if err != nil {
@@ -102,4 +102,21 @@ func (r *UserStatRepository) GetByUser(ctx context.Context, userID primitive.Obj
 		return nil, fmt.Errorf("get user stat: %w", err)
 	}
 	return &s, nil
+}
+
+// AddAcceptedOnly 重判转为通过时仅补发“通过数”与语言分布（不重复累计总提交数/日活）。
+// 调用方已通过 submissions.rewards_granted 幂等保证只补一次。
+func (r *UserStatRepository) AddAcceptedOnly(ctx context.Context, userID primitive.ObjectID, language string, dayKey string) error {
+	_, err := r.coll.UpdateOne(ctx, bson.M{"user_id": userID}, bson.M{
+		"$inc": bson.M{
+			"accepted_submissions":      1,
+			"language_dist." + language: 1,
+			"daily_activity." + dayKey:  1,
+		},
+		"$set": bson.M{"updated_at": time.Now()},
+	})
+	if err != nil {
+		return fmt.Errorf("add accepted only stat: %w", err)
+	}
+	return nil
 }

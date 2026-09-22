@@ -11,13 +11,13 @@ const (
 	MsgInternalError   = "服务器内部错误"
 	MsgValidationError = "参数校验失败"
 
-	MsgUserNotFound     = "用户不存在"
-	MsgUserExists       = "用户名或邮箱已被注册"
-	MsgUserBanned       = "该账号已被禁用"
-	MsgUserWrongPass    = "用户名或密码错误"
-	MsgUserSignedToday  = "今日已签到，请明天再来"
-	MsgUserSignInOK     = "签到成功，连续签到 %d 天"
-	MsgUserRoleChanged  = "角色已更新为 %s"
+	MsgUserNotFound      = "用户不存在"
+	MsgUserExists        = "用户名或邮箱已被注册"
+	MsgUserBanned        = "该账号已被禁用"
+	MsgUserWrongPass     = "用户名或密码错误"
+	MsgUserSignedToday   = "今日已签到，请明天再来"
+	MsgUserSignInOK      = "签到成功，连续签到 %d 天"
+	MsgUserRoleChanged   = "角色已更新为 %s"
 	MsgUserStatusChanged = "账号状态已更新为 %s"
 
 	MsgCourseNotFound = "课程不存在"
@@ -42,6 +42,12 @@ const (
 	MsgJudgeUnavailable   = "评测服务暂不可用"
 	MsgJudgeCompileError  = "编译错误: %s"
 
+	MsgRejudgeNotEligible  = "仅对已完成但未通过的提交可以发起重判"
+	MsgRejudgeNoCases      = "题目缺少测试用例，无法重判"
+	MsgRejudgeRoundFailed  = "重判排队失败，请稍后重试"
+	MsgRejudgeOK           = "重判已完成"
+	MsgRejudgeRewardedNote = "重判通过，已补发积分"
+
 	MsgDiscussionNotFound = "讨论帖不存在"
 	MsgDiscussionDenied   = "无权操作该讨论帖"
 	MsgDiscussionLocked   = "讨论帖已被隐藏"
@@ -51,7 +57,7 @@ const (
 	MsgAchievementNotFound = "成就徽章不存在"
 	MsgLeaderboardEmpty    = "排行榜暂无数据"
 
-	MsgInvalidID      = "无效的 %s ID"
-	MsgRequestID      = "请求 ID: %s"
-	MsgHealthOK       = "codelearn backend is healthy"
+	MsgInvalidID = "无效的 %s ID"
+	MsgRequestID = "请求 ID: %s"
+	MsgHealthOK  = "codelearn backend is healthy"
 )

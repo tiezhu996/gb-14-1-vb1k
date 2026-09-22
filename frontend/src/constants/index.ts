@@ -92,3 +92,15 @@ export const LEADERBOARD_PERIOD_LABELS: Record<string, string> = {
   weekly: '周榜',
   total: '总榜',
 }
+
+// 允许发起重判的提交状态：已完成但未通过
+export const REJUDGE_ELIGIBLE_STATUSES = ['partial', 'runtime_error', 'timeout'] as const
+
+// 终态状态（首次评测已完成）
+export const SUBMISSION_TERMINAL_STATUSES = ['accepted', 'partial', 'runtime_error', 'timeout'] as const
+
+// 重判轮次文案
+export function formatRejudgeRound(round: number): string {
+  if (round <= 0) return '首次评测'
+  return `第 ${round} 次重判`
+}

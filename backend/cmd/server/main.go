@@ -104,6 +104,9 @@ func ensureIndexes(ctx context.Context, mongo *database.Mongo) error {
 	if err := repository.NewSubmissionRepository(db).EnsureIndexes(ctx); err != nil {
 		return err
 	}
+	if err := repository.NewRejudgeRepository(db).EnsureIndexes(ctx); err != nil {
+		return err
+	}
 	if err := repository.NewDiscussionRepository(db).EnsureIndexes(ctx); err != nil {
 		return err
 	}

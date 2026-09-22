@@ -42,7 +42,8 @@ func ErrorHandler(logger *slog.Logger) gin.HandlerFunc {
 					ae.Code == constants.CodeAchievementNotFound || ae.Code == constants.CodeAuditNotFound:
 					status = http.StatusNotFound
 				case ae.Code == constants.CodeConflict || ae.Code == constants.CodeUserExists ||
-					ae.Code == constants.CodeCourseExists || ae.Code == constants.CodeProblemExists:
+					ae.Code == constants.CodeCourseExists || ae.Code == constants.CodeProblemExists ||
+					ae.Code == constants.CodeRejudgeNotEligible:
 					status = http.StatusConflict
 				case ae.Code == constants.CodeRateLimited:
 					status = http.StatusTooManyRequests

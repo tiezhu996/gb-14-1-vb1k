@@ -107,9 +107,9 @@ func (r *SubmissionRepository) AggregatePoints(ctx context.Context, filter bson.
 	pipeline := mongo.Pipeline{
 		{{Key: "$match", Value: filter}},
 		{{Key: "$group", Value: bson.M{
-			"_id":     "$user_id",
-			"points":  bson.M{"$sum": "$points_awarded"},
-			"solved":  bson.M{"$sum": 1},
+			"_id":      "$user_id",
+			"points":   bson.M{"$sum": "$points_awarded"},
+			"solved":   bson.M{"$sum": 1},
 			"nickname": bson.M{"$last": "$username"},
 		}}},
 		{{Key: "$sort", Value: bson.D{{Key: "points", Value: -1}, {Key: "solved", Value: -1}}}},
@@ -141,4 +141,59 @@ func (r *SubmissionRepository) CountAcceptedByUser(ctx context.Context, userID, 
 		return 0, fmt.Errorf("count accepted by user: %w", err)
 	}
 	return n, nil
+}
+
+// ReserveRejudgeRound 原子占用一个重判轮次：rejudge_count +1 并把最新状态置为 judging。
+// 返回占用后的轮次（从 1 开始）。配合 submission_rejudges 的 (submission_id, round)
+// 唯一索引，保证并发重判不会产生重复轮次。首次评测字段（code/status/results 等）不修改。
+func (r *SubmissionRepository) ReserveRejudgeRound(ctx context.Context, id primitive.ObjectID) (int, error) {
+	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
+	var s model.Submission
+	err := r.coll.FindOneAndUpdate(ctx, bson.M{"_id": id}, bson.M{
+		"$inc": bson.M{"rejudge_count": 1},
+		"$set": bson.M{"latest_status": "judging"},
+	}, opts).Decode(&s)
+	if errors.Is(err, mongo.ErrNoDocuments) {
+		return 0, fmt.Errorf("reserve rejudge round: %w", ErrSubmissionNotFound)
+	}
+	if err != nil {
+		return 0, fmt.Errorf("reserve rejudge round: %w", err)
+	}
+	return s.RejudgeCount, nil
+}
+
+// MarkRewarded 幂等补发奖励标记：仅当 rewards_granted=false 时翻转为 true。
+// 返回 true 表示本次调用抢到了补发资格（调用方据此实际累加积分/解决数/通过数，只补一次）。
+func (r *SubmissionRepository) MarkRewarded(ctx context.Context, id primitive.ObjectID) (bool, error) {
+	res, err := r.coll.UpdateOne(ctx,
+		bson.M{"_id": id, "rewards_granted": bson.M{"$ne": true}},
+		bson.M{"$set": bson.M{"rewards_granted": true}})
+	if err != nil {
+		return false, fmt.Errorf("mark submission rewarded: %w", err)
+	}
+	return res.ModifiedCount > 0, nil
+}
+
+// SetLatestStatusIfNotAccepted 更新最新重判状态；一旦最新状态已为 accepted 则不再覆盖，
+// 避免并发/重复重判把已通过的最新状态改回失败，保证“始终失败不扣减、不重复累计”。
+func (r *SubmissionRepository) SetLatestStatusIfNotAccepted(ctx context.Context, id primitive.ObjectID, status string) error {
+	_, err := r.coll.UpdateOne(ctx,
+		bson.M{"_id": id, "latest_status": bson.M{"$ne": "accepted"}},
+		bson.M{"$set": bson.M{"latest_status": status}})
+	if err != nil {
+		return fmt.Errorf("set latest status: %w", err)
+	}
+	return nil
+}
+
+// ResetRejudgeForRoundFailed 重判排队失败时回滚轮次占用（latest_status 不回滚为终态，
+// 因记录尚未生成；仅回退计数），失败信息同时落日志。
+func (r *SubmissionRepository) ResetRejudgeForRoundFailed(ctx context.Context, id primitive.ObjectID) error {
+	_, err := r.coll.UpdateOne(ctx, bson.M{"_id": id}, bson.M{
+		"$inc": bson.M{"rejudge_count": -1},
+	})
+	if err != nil {
+		return fmt.Errorf("reset rejudge round: %w", err)
+	}
+	return nil
 }

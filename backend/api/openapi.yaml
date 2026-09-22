@@ -68,7 +68,39 @@ paths:
   /submissions:
     get:
       summary: 提交记录列表
+      description: 学生仅返回本人提交；管理员可查看全部。status 按最新状态过滤（有重判取 latest_status）。
       security: [ { bearerAuth: [] } ]
+      responses:
+        '200': { description: ok }
+  /submissions/{id}:
+    get:
+      summary: 提交详情（本人/管理员）
+      description: 返回首次评测不可变结果、重判次数 rejudge_count、最新状态 latest_status。
+      security: [ { bearerAuth: [] } ]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: ok }
+  /submissions/{id}/rejudge:
+    post:
+      summary: 发起重判（管理员）
+      description: >-
+        仅对“已完成但未通过”（partial/runtime_error/timeout）的提交生效；每次重判生成独立记录，
+        原代码与首次评测结果不改写；重判通过仅补发一次积分/解决数/通过数，重复重判不重复累计。
+        已通过或评测中返回 409。
+      security: [ { bearerAuth: [] } ]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: ok }
+        '409': { description: 提交状态不允许重判 }
+  /submissions/{id}/rejudges:
+    get:
+      summary: 重判历史（本人/管理员）
+      description: 返回该提交历次重判独立记录（轮次、状态、结果、相对上一轮差异、是否补发奖励）。
+      security: [ { bearerAuth: [] } ]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
       responses:
         '200': { description: ok }
   /problems/{id}/discussions:
