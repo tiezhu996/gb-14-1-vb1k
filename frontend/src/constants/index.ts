@@ -66,6 +66,13 @@ export const SUBMISSION_STATUS_CLASSES: Record<string, string> = {
   judging: 'bg-blue-100 text-blue-700',
 }
 
+// 可重判状态：仅已完成且未通过（与后端 RejudgeableSubmissionStatus 对应）
+export const REJUDGEABLE_STATUSES = ['partial', 'runtime_error', 'timeout'] as const
+
+export function canRejudgeSubmission(latestStatus: string): boolean {
+  return (REJUDGEABLE_STATUSES as readonly string[]).includes(latestStatus)
+}
+
 export const LANGUAGES = {
   python: 'python',
   javascript: 'javascript',

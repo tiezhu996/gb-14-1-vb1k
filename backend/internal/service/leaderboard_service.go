@@ -27,8 +27,12 @@ func NewLeaderboardService(subRepo *repository.SubmissionRepository, userRepo *r
 }
 
 // Get 查询排行榜：period 支持 daily/weekly/total。
+// 通过口径：首次评测通过（status=accepted）或重判后通过（latest_status=accepted）。
 func (s *LeaderboardService) Get(ctx context.Context, period string, limit int64) ([]dto.LeaderboardEntryResponse, error) {
-	filter := bson.M{"status": constants.SubmissionAccepted}
+	filter := bson.M{"$or": bson.A{
+		bson.M{"status": constants.SubmissionAccepted},
+		bson.M{"latest_status": constants.SubmissionAccepted},
+	}}
 	now := time.Now()
 	switch period {
 	case "daily":
@@ -55,8 +59,9 @@ func (s *LeaderboardService) Get(ctx context.Context, period string, limit int64
 			break
 		}
 		userIDHex, _ := row["_id"].(primitive.ObjectID)
-		points, _ := row["points"].(int64)
-		solved, _ := row["solved"].(int64)
+		// 聚合结果数值可能是 int32/int64（$sum: 1 产出 int32），统一兼容转换。
+		points := aggregateInt64(row["points"])
+		solved := aggregateInt64(row["solved"])
 		username, _ := row["nickname"].(string)
 		nickname := username
 		if user, err := s.userRepo.FindByID(ctx, userIDHex); err == nil {
@@ -74,4 +79,19 @@ func (s *LeaderboardService) Get(ctx context.Context, period string, limit int64
 	}
 	s.logger.Info(constants.LogLeaderboardQueried, "period", period, "count", len(out))
 	return out, nil
+}
+
+// aggregateInt64 兼容 MongoDB 聚合输出的 int32/int64/float64 数值。
+func aggregateInt64(v any) int64 {
+	switch n := v.(type) {
+	case int32:
+		return int64(n)
+	case int64:
+		return n
+	case int:
+		return int64(n)
+	case float64:
+		return int64(n)
+	}
+	return 0
 }

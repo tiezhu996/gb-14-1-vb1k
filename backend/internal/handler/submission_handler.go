@@ -72,3 +72,19 @@ func (h *SubmissionHandler) List(c *gin.Context) {
 	}
 	util.SuccessPage(c, list, total, page, pageSize)
 }
+
+// Rejudge 管理员对已完成但未通过的提交发起重判。
+func (h *SubmissionHandler) Rejudge(c *gin.Context) {
+	operatorID := getUserID(c)
+	id, err := primitive.ObjectIDFromHex(c.Param("id"))
+	if err != nil {
+		_ = c.Error(util.NewAppError(constants.CodeBadRequest, "无效的提交 ID"))
+		return
+	}
+	resp, err := h.submissionService.Rejudge(c.Request.Context(), id, operatorID)
+	if err != nil {
+		_ = c.Error(err)
+		return
+	}
+	util.Success(c, resp)
+}

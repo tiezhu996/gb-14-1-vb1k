@@ -41,6 +41,8 @@ const (
 	MsgJudgeTimeout       = "代码运行超时（超过 %d 秒）"
 	MsgJudgeUnavailable   = "评测服务暂不可用"
 	MsgJudgeCompileError  = "编译错误: %s"
+	MsgSubmissionRejudgeDenied = "仅已完成且未通过的提交可以发起重判"
+	MsgSubmissionRejudged      = "重判完成：%s"
 
 	MsgDiscussionNotFound = "讨论帖不存在"
 	MsgDiscussionDenied   = "无权操作该讨论帖"

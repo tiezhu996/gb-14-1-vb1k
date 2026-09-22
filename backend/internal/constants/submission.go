@@ -46,3 +46,14 @@ func ValidSubmissionStatus(s string) bool {
 	}
 	return false
 }
+
+// RejudgeableSubmissionStatus 校验状态是否允许发起重判：
+// 仅"已完成但未通过"（partial / runtime_error / timeout）的提交可重判；
+// 排队中/评测中/已通过（含重判已通过）均不可重判，防止重复累计积分。
+func RejudgeableSubmissionStatus(s string) bool {
+	switch s {
+	case SubmissionPartial, SubmissionRuntimeError, SubmissionTimeout:
+		return true
+	}
+	return false
+}

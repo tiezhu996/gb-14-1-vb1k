@@ -84,6 +84,23 @@ export interface JudgeResult {
   error_message: string
 }
 
+export interface RejudgeRecord {
+  id: string
+  seq: number
+  operator_id: string
+  operator_name: string
+  prev_status: string
+  prev_score: number
+  status: string
+  score: number
+  score_delta: number
+  points_awarded: number
+  runtime_ms: number
+  results: JudgeResult[]
+  error_message: string
+  created_at: string
+}
+
 export interface Submission {
   id: string
   user_id: string
@@ -98,6 +115,11 @@ export interface Submission {
   runtime_ms: number
   results: JudgeResult[]
   error_message: string
+  latest_status: string
+  latest_score: number
+  rejudge_count: number
+  rejudge_points_awarded: number
+  rejudges: RejudgeRecord[]
   created_at: string
 }
 

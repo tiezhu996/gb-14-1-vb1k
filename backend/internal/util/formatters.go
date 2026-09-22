@@ -108,6 +108,17 @@ func FormatSubmissionStatusClass(s string) string {
 	}
 }
 
+// FormatRejudgeDiffText 重判结果差异文本（日志/审计文案复用）：
+// "运行错误 → 通过（得分 +100）"。
+func FormatRejudgeDiffText(prevStatus, newStatus string, scoreDelta int) string {
+	sign := "+"
+	if scoreDelta < 0 {
+		sign = ""
+	}
+	return fmt.Sprintf("%s → %s（得分 %s%d）",
+		FormatSubmissionStatusText(prevStatus), FormatSubmissionStatusText(newStatus), sign, scoreDelta)
+}
+
 // FormatLanguageText 语言文本（评测语言 -> 前端徽标）。
 func FormatLanguageText(lang string) string {
 	switch lang {

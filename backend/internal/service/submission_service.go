@@ -92,8 +92,9 @@ func (s *SubmissionService) Submit(ctx context.Context, userID primitive.ObjectI
 	_ = s.statRepo.AddSubmission(ctx, userID, req.Language, status == constants.SubmissionAccepted, dayKey)
 
 	if status == constants.SubmissionAccepted {
-		// 首次通过才累计积分/解题数/通过数，避免重复刷分。
-		already, err := s.subRepo.CountAcceptedByUser(ctx, userID, problemID)
+		// 首次解决才累计积分/解题数/通过数，避免重复刷分；
+		// 重判已通过（latest_status=accepted）的提交同样计入去重。
+		already, err := s.subRepo.CountSolvedByUser(ctx, userID, problemID)
 		if err == nil && already <= 1 {
 			_ = s.userRepo.AddPoints(ctx, userID, pointsAwarded)
 			_ = s.userRepo.MarkSolved(ctx, userID)
@@ -126,6 +127,84 @@ func (s *SubmissionService) Get(ctx context.Context, submissionID, userID primit
 		return nil, util.WrapAppError(constants.CodeSubmissionDenied, constants.MsgSubmissionDenied, nil)
 	}
 	resp := dto.ToSubmissionResponse(sub)
+	return &resp, nil
+}
+
+// Rejudge 管理员对"已完成但未通过"的提交发起重判：
+// 每次重判生成独立记录（追加到 rejudges），原代码与首次评测结果不改写；
+// 重判转为通过时只补发一次积分/解题数/通过数，重复重判或始终失败不扣减、不重复累计。
+func (s *SubmissionService) Rejudge(ctx context.Context, submissionID, operatorID primitive.ObjectID) (*dto.SubmissionResponse, error) {
+	sub, err := s.subRepo.FindByID(ctx, submissionID)
+	if err != nil {
+		if errors.Is(err, repository.ErrSubmissionNotFound) {
+			return nil, util.WrapAppError(constants.CodeSubmissionNotFound, constants.MsgSubmissionNotFound, err)
+		}
+		return nil, util.WrapAppError(constants.CodeInternal, constants.MsgInternalError, err)
+	}
+	// 仅已完成且未通过（partial/runtime_error/timeout）的最新状态可重判；
+	// 已通过（含此前重判通过）或评测中的提交拒绝重判，防止重复补发。
+	latestStatus, latestScore := sub.Latest()
+	if !constants.RejudgeableSubmissionStatus(latestStatus) {
+		s.logger.Warn(constants.LogSubmissionRejudgeDenied, "submission_id", submissionID.Hex(), "latest_status", latestStatus)
+		return nil, util.WrapAppError(constants.CodeSubmissionRejudgeDenied, constants.MsgSubmissionRejudgeDenied, nil)
+	}
+	problem, err := s.problemRepo.FindByID(ctx, sub.ProblemID)
+	if err != nil {
+		if errors.Is(err, repository.ErrProblemNotFound) {
+			return nil, util.WrapAppError(constants.CodeProblemNotFound, constants.MsgProblemNotFound, err)
+		}
+		return nil, util.WrapAppError(constants.CodeInternal, constants.MsgInternalError, err)
+	}
+	operator, err := s.userRepo.FindByID(ctx, operatorID)
+	if err != nil {
+		return nil, util.WrapAppError(constants.CodeUserNotFound, constants.MsgUserNotFound, err)
+	}
+
+	// 使用提交时的原始代码与语言，按题目当前测试用例重新评测。
+	results, status, score, runtimeMs, errMsg := s.judge.Judge(ctx, sub.Language, sub.Code, problem.TestCases, problem.TimeLimit)
+
+	// 重判通过且此前未解决该题时，才补发一次积分（幂等去重）。
+	pointsAwarded := int64(0)
+	if status == constants.SubmissionAccepted {
+		solved, cntErr := s.subRepo.CountSolvedByUser(ctx, sub.UserID, sub.ProblemID)
+		if cntErr == nil && solved == 0 {
+			pointsAwarded = int64(problem.Points)
+		}
+	}
+	rec := &model.RejudgeRecord{
+		Seq:           sub.RejudgeCount + 1,
+		OperatorID:    operatorID,
+		OperatorName:  operator.Username,
+		PrevStatus:    latestStatus,
+		PrevScore:     latestScore,
+		Status:        status,
+		Score:         score,
+		PointsAwarded: pointsAwarded,
+		RuntimeMs:     runtimeMs,
+		Results:       results,
+		ErrorMessage:  errMsg,
+	}
+	if err := s.subRepo.AppendRejudge(ctx, sub.ID, rec); err != nil {
+		return nil, util.WrapAppError(constants.CodeInternal, constants.MsgInternalError, err)
+	}
+	s.logger.Info(constants.LogSubmissionRejudged,
+		"submission_id", sub.ID.Hex(), "seq", rec.Seq, "operator", operator.Username,
+		"diff", util.FormatRejudgeDiffText(latestStatus, status, score-latestScore))
+
+	if pointsAwarded > 0 {
+		// 补发积分/解题数/通过数（仅一次，由上面的 CountSolvedByUser 去重保证）。
+		_ = s.userRepo.AddPoints(ctx, sub.UserID, pointsAwarded)
+		_ = s.userRepo.MarkSolved(ctx, sub.UserID)
+		_ = s.problemRepo.IncAccepted(ctx, sub.ProblemID)
+		// 成就检查：与正常通过一致（授予幂等）。
+		s.achievement.CheckAfterSubmission(ctx, sub.UserID, status, problem)
+	}
+
+	updated, err := s.subRepo.FindByID(ctx, submissionID)
+	if err != nil {
+		return nil, util.WrapAppError(constants.CodeInternal, constants.MsgInternalError, err)
+	}
+	resp := dto.ToSubmissionResponse(updated)
 	return &resp, nil
 }
 

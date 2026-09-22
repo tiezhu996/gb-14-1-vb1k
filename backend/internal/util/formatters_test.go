@@ -73,3 +73,24 @@ func TestFormatRoleText(t *testing.T) {
 		t.Errorf("FormatRoleText(student) = %q", got)
 	}
 }
+
+func TestFormatRejudgeDiffText(t *testing.T) {
+	tests := []struct {
+		name       string
+		prevStatus string
+		newStatus  string
+		scoreDelta int
+		want       string
+	}{
+		{name: "失败转通过", prevStatus: constants.SubmissionRuntimeError, newStatus: constants.SubmissionAccepted, scoreDelta: 100, want: "运行错误 → 通过（得分 +100）"},
+		{name: "部分通过转通过", prevStatus: constants.SubmissionPartial, newStatus: constants.SubmissionAccepted, scoreDelta: 50, want: "部分通过 → 通过（得分 +50）"},
+		{name: "得分下降", prevStatus: constants.SubmissionPartial, newStatus: constants.SubmissionTimeout, scoreDelta: -50, want: "部分通过 → 超时（得分 -50）"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := FormatRejudgeDiffText(tt.prevStatus, tt.newStatus, tt.scoreDelta); got != tt.want {
+				t.Errorf("FormatRejudgeDiffText() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}

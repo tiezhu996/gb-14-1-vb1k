@@ -49,11 +49,12 @@ const (
 
 // 提交/评测模块错误码
 const (
-	CodeSubmissionNotFound = 5001
-	CodeSubmissionDenied   = 5002
-	CodeJudgeTimeout       = 5003
-	CodeJudgeLanguage      = 5004
-	CodeJudgeUnavailable   = 5005
+	CodeSubmissionNotFound      = 5001
+	CodeSubmissionDenied        = 5002
+	CodeJudgeTimeout            = 5003
+	CodeJudgeLanguage           = 5004
+	CodeJudgeUnavailable        = 5005
+	CodeSubmissionRejudgeDenied = 5006
 )
 
 // 讨论模块错误码

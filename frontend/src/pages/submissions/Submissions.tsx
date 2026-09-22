@@ -35,7 +35,9 @@ export default function Submissions() {
               <tr>
                 <th className="px-5 py-3 text-left font-semibold text-gray-600">题目</th>
                 <th className="px-5 py-3 text-left font-semibold text-gray-600">语言</th>
-                <th className="px-5 py-3 text-left font-semibold text-gray-600">状态</th>
+                <th className="px-5 py-3 text-left font-semibold text-gray-600">首次结果</th>
+                <th className="px-5 py-3 text-left font-semibold text-gray-600">最新状态</th>
+                <th className="px-5 py-3 text-left font-semibold text-gray-600">重判次数</th>
                 <th className="px-5 py-3 text-left font-semibold text-gray-600">得分</th>
                 <th className="px-5 py-3 text-left font-semibold text-gray-600">耗时</th>
                 <th className="px-5 py-3 text-left font-semibold text-gray-600">提交时间</th>
@@ -53,7 +55,24 @@ export default function Submissions() {
                   <td className="px-5 py-3">
                     <StatusBadge value={s.status} kind="submission" />
                   </td>
-                  <td className="px-5 py-3 font-medium text-gray-700">{s.score}%</td>
+                  <td className="px-5 py-3">
+                    <Link to={`/submissions/${s.id}`} className="inline-flex items-center gap-1 hover:underline">
+                      <StatusBadge value={s.latest_status || s.status} kind="submission" />
+                    </Link>
+                  </td>
+                  <td className="px-5 py-3">
+                    {s.rejudge_count > 0 ? (
+                      <Link
+                        to={`/submissions/${s.id}`}
+                        className="rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-medium text-violet-700 hover:bg-violet-200"
+                      >
+                        重判 ×{s.rejudge_count}
+                      </Link>
+                    ) : (
+                      <span className="text-gray-400">-</span>
+                    )}
+                  </td>
+                  <td className="px-5 py-3 font-medium text-gray-700">{s.latest_score ?? s.score}%</td>
                   <td className="px-5 py-3 text-gray-600">{s.runtime_ms} ms</td>
                   <td className="px-5 py-3 text-gray-500">{s.created_at}</td>
                 </tr>

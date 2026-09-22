@@ -13,3 +13,7 @@ export function getSubmission(id: string) {
 export function listSubmissions(params: { page?: number; page_size?: number; problem_id?: string; status?: string }) {
   return request.get<unknown, PageData<Submission>>('/submissions', { params })
 }
+
+export function rejudgeSubmission(id: string) {
+  return request.post<unknown, Submission>(`/submissions/${id}/rejudge`)
+}

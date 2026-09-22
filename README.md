@@ -36,9 +36,10 @@ docker compose down -v --remove-orphans
 2. **课程内容管理**：管理员创建课程（Markdown 图文教程），章节拆解、代码片段展示
 3. **在线 IDE**：Monaco Editor 内嵌，支持 Python / JavaScript / Java 语法高亮与自动补全；服务端沙箱评测，单用例超时 10 秒自动终止
 4. **编程题目评测**：ACM 风格，多测试用例逐条运行，判定 通过 / 部分通过 / 运行错误 / 超时，展示输入、期望输出与实际输出对比
-5. **排行榜与成就系统**：解题数量 × 难度加权积分（日榜 / 周榜 / 总榜）；成就徽章（连续签到 7 天、完成 10/100 题、首次通过困难题等）
-6. **讨论社区**：每道题专属讨论区，支持 Markdown 与代码块、点赞、按最佳答案排序
-7. **个人学习仪表盘**：累计学习时长、完成课程数、解题总数、各语言解题分布饼图、近 90 天每日学习热力图
+5. **提交重判与结果历史**：管理员可对已完成但未通过的提交发起重判；每次重判生成独立记录，原代码与首次评测结果不改写；重判转为通过时只补发一次积分/解题数/通过数；列表与详情展示重判次数、最新状态、历次结果及差异
+6. **排行榜与成就系统**：解题数量 × 难度加权积分（日榜 / 周榜 / 总榜）；成就徽章（连续签到 7 天、完成 10/100 题、首次通过困难题等）
+7. **讨论社区**：每道题专属讨论区，支持 Markdown 与代码块、点赞、按最佳答案排序
+8. **个人学习仪表盘**：累计学习时长、完成课程数、解题总数、各语言解题分布饼图、近 90 天每日学习热力图
 
 ## 技术栈
 
@@ -218,7 +219,8 @@ curl -sS -X POST http://localhost:3010/api/v1/problems \
 | DELETE | /api/v1/problems/:id | 删除题目 | 管理员 | ProblemService.Delete |
 | POST | /api/v1/problems/:id/submit | 提交评测 | 登录 | SubmissionService.Submit + JudgeService.Judge |
 | GET | /api/v1/submissions | 提交记录 | 登录/管理员 | SubmissionService.List |
-| GET | /api/v1/submissions/:id | 提交详情 | 本人/管理员 | SubmissionService.Get |
+| GET | /api/v1/submissions/:id | 提交详情（含重判历史） | 本人/管理员 | SubmissionService.Get |
+| POST | /api/v1/submissions/:id/rejudge | 重判提交（仅已完成且未通过） | 管理员 | SubmissionService.Rejudge + JudgeService.Judge（复用评测） |
 | GET | /api/v1/problems/:id/discussions | 讨论区 | 登录 | DiscussionService.ListByProblem |
 | POST | /api/v1/problems/:id/discussions | 发布讨论 | 登录 | DiscussionService.Create |
 | POST | /api/v1/discussions/:id/vote | 点赞/取消 | 登录 | DiscussionService.Vote |
@@ -319,16 +321,16 @@ curl -sS -X POST http://localhost:3010/api/v1/problems \
 
 | 位置 | 文件 |
 | --- | --- |
-| 后端常量 | `backend/internal/constants/submission.go` |
-| 模型 | `backend/internal/model/submission.go` |
-| DTO | `backend/internal/dto/submission_dto.go` |
-| Service 状态机 | `backend/internal/service/judge_service.go`（评测判定）、`submission_service.go` |
+| 后端常量 | `backend/internal/constants/submission.go`（含 RejudgeableSubmissionStatus 重判准入） |
+| 模型 | `backend/internal/model/submission.go`（Submission + RejudgeRecord 重判历史） |
+| DTO | `backend/internal/dto/submission_dto.go`（SubmissionResponse + RejudgeRecordResponse 差异） |
+| Service 状态机 | `backend/internal/service/judge_service.go`（评测判定）、`submission_service.go`（Submit + Rejudge） |
 | Handler | `backend/internal/handler/submission_handler.go` |
-| 日志模板 | `backend/internal/constants/log_templates.go`（submission.accepted/partial/error/timeout） |
-| 错误码 | `backend/internal/constants/error_codes.go`（CodeJudgeTimeout/CodeSubmissionNotFound） |
-| 格式化 | `backend/internal/util/formatters.go`（FormatSubmissionStatusText/Class） |
-| 前端常量 | `frontend/src/constants/index.ts`（SUBMISSION_STATUS/LABELS/CLASSES） |
-| 前端结果页 | `frontend/src/pages/problems/ProblemDetail.tsx`（结果表格）、`frontend/src/pages/submissions/Submissions.tsx` |
+| 日志模板 | `backend/internal/constants/log_templates.go`（submission.accepted/partial/error/timeout/rejudged） |
+| 错误码 | `backend/internal/constants/error_codes.go`（CodeJudgeTimeout/CodeSubmissionNotFound/CodeSubmissionRejudgeDenied） |
+| 格式化 | `backend/internal/util/formatters.go`（FormatSubmissionStatusText/Class、FormatRejudgeDiffText） |
+| 前端常量 | `frontend/src/constants/index.ts`（SUBMISSION_STATUS/LABELS/CLASSES、REJUDGEABLE_STATUSES） |
+| 前端结果页 | `frontend/src/pages/problems/ProblemDetail.tsx`（结果表格）、`frontend/src/pages/submissions/Submissions.tsx`（最新状态/重判次数）、`frontend/src/pages/submissions/SubmissionDetail.tsx`（重判历史与差异） |
 | 前端徽标 | `frontend/src/components/StatusBadge.tsx`（submission kind） |
 
 ### 5. 评测语言枚举（python / javascript / java）

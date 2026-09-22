@@ -67,8 +67,24 @@ paths:
         '200': { description: ok }
   /submissions:
     get:
-      summary: 提交记录列表
+      summary: 提交记录列表（含重判次数与最新状态）
       security: [ { bearerAuth: [] } ]
+      responses:
+        '200': { description: ok }
+  /submissions/{id}:
+    get:
+      summary: 提交详情（本人/管理员，含历次重判结果及差异）
+      security: [ { bearerAuth: [] } ]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: ok }
+  /submissions/{id}/rejudge:
+    post:
+      summary: 重判提交（管理员，仅已完成且未通过的提交；每次重判生成独立记录，转通过仅补发一次积分）
+      security: [ { bearerAuth: [] } ]
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string } }
       responses:
         '200': { description: ok }
   /problems/{id}/discussions:

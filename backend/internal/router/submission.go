@@ -10,4 +10,5 @@ import (
 func registerSubmissionRoutes(api *gin.RouterGroup, h *handler.SubmissionHandler, auth, admin, audit gin.HandlerFunc) {
 	api.GET("/submissions", auth, h.List)
 	api.GET("/submissions/:id", auth, h.Get)
+	api.POST("/submissions/:id/rejudge", auth, admin, audit, h.Rejudge)
 }
